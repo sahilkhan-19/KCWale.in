@@ -35,6 +35,10 @@ const orderSchema = new mongoose.Schema(
           required: true,
           min: 0,
         },
+        selectedAddon: {
+          name: { type: String },
+          price: { type: Number }
+        },
       },
     ],
 
@@ -58,9 +62,39 @@ const orderSchema = new mongoose.Schema(
     },
 
     deliveryAddress: {
-      type: String,
-      required: true,
-      trim: true,
+      house: { type: String, required: true, trim: true },
+      apartment: { type: String, trim: true },
+      street: { type: String, required: true, trim: true },
+      landmark: { type: String, trim: true },
+      city: { type: String, required: true, trim: true },
+      pincode: { type: String, required: true, trim: true },
+    },
+
+    deliveryLocation: {
+      latitude: {
+        type: Number,
+        required: true,
+        min: [-90, "Latitude must be between -90 and 90"],
+        max: [90, "Latitude must be between -90 and 90"]
+      },
+      longitude: {
+        type: Number,
+        required: true,
+        min: [-180, "Longitude must be between -180 and 180"],
+        max: [180, "Longitude must be between -180 and 180"]
+      }
+    },
+
+    distanceInKm: {
+      type: Number
+    },
+
+    estimatedDuration: {
+      type: Number
+    },
+
+    deliveryCharge: {
+      type: Number
     },
 
     // For future Razorpay integration

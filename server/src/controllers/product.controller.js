@@ -120,6 +120,14 @@ export const getAllProducts = async (req, res) => {
       Product.countDocuments(filter),
     ]);
 
+    // Shuffle the products list randomly on each request to change their order on reload
+    if (!sort) {
+      for (let i = products.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [products[i], products[j]] = [products[j], products[i]];
+      }
+    }
+
     res.status(200).json({
       message: "Products fetched successfully",
       count: products.length,
@@ -259,11 +267,27 @@ export const deleteProduct = async (req, res) => {
 // ==================== FEATURED PRODUCTS ====================
 export const getFeaturedProducts = async (req, res) => {
   try {
+    const queryConditions = [
+      { name: { $regex: /^Special Chicken Zinger Pizza$/i } },
+      { name: { $regex: /^Peri Peri Chicken Zinger Burger$/i } },
+      { name: { $regex: /^Chicken Chizza$/i }, price: 299 },
+      { name: { $regex: /^Chicken Alfredo Pasta$/i } },
+      { name: { $regex: /^Kurkure Masala Momos$/i }, price: 119 },
+      { name: { $regex: /^Classic Margherita$/i } },
+      { name: { $regex: /^Blueberry Shake$/i } },
+      { name: { $regex: /^Blue Lagoon Mojito$/i } }
+    ];
+
     const products = await Product.find({
       available: true,
-    })
-      .sort({ createdAt: -1 })
-      .limit(8);
+      $or: queryConditions,
+    });
+
+    // Shuffle the products list randomly on each request to change their order on reload
+    for (let i = products.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [products[i], products[j]] = [products[j], products[i]];
+    }
 
     res.status(200).json({
       message: "Featured products fetched successfully",

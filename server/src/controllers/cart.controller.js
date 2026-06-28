@@ -4,7 +4,7 @@ import Product from "../models/Product.js";
 export const addToCart = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { productId, quantity = 1 } = req.body;
+    const { productId, quantity = 1, selectedAddon } = req.body;
 
     if (!productId) {
       return res.status(400).json({ message: "Product ID is required" });
@@ -33,17 +33,34 @@ export const addToCart = async (req, res) => {
       // first item this user has ever added — create their cart
       cart = await Cart.create({
         user: userId,
-        items: [{ product: productId, quantity }],
+        items: [{
+          product: productId,
+          quantity,
+          selectedAddon: selectedAddon ? {
+            name: selectedAddon.name,
+            price: selectedAddon.price
+          } : undefined
+        }],
       });
     } else {
       const existingItem = cart.items.find(
-        (item) => item.product.toString() === productId,
+        (item) =>
+          item.product.toString() === productId &&
+          ((!item.selectedAddon && !selectedAddon) ||
+           (item.selectedAddon?.name === selectedAddon?.name))
       );
 
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
-        cart.items.push({ product: productId, quantity });
+        cart.items.push({
+          product: productId,
+          quantity,
+          selectedAddon: selectedAddon ? {
+            name: selectedAddon.name,
+            price: selectedAddon.price
+          } : undefined
+        });
       }
 
       await cart.save();
@@ -51,7 +68,7 @@ export const addToCart = async (req, res) => {
 
     const populatedCart = await Cart.findById(cart._id).populate(
       "items.product",
-      "name price image available",
+      "name price images available",
     );
 
     res.status(200).json({
@@ -72,7 +89,7 @@ export const getCart = async (req, res) => {
 
     const cart = await Cart.findOne({ user: userId }).populate(
       "items.product",
-      "name price image available"
+      "name price images available"
     );
 
     if (!cart) {
@@ -85,7 +102,8 @@ export const getCart = async (req, res) => {
     }
 
     const subtotal = cart.items.reduce((total, item) => {
-      return total + item.product.price * item.quantity;
+      const itemUnitPrice = item.product ? (item.product.price + (item.selectedAddon?.price || 0)) : 0;
+      return total + itemUnitPrice * item.quantity;
     }, 0);
 
     res.status(200).json({
@@ -102,7 +120,7 @@ export const getCart = async (req, res) => {
 export const updateCartItem = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { productId } = req.params;
+    const { itemId } = req.params;
     const { quantity } = req.body;
 
     if (quantity === undefined || quantity < 1) {
@@ -117,7 +135,7 @@ export const updateCartItem = async (req, res) => {
     }
 
     const item = cart.items.find(
-      (item) => item.product.toString() === productId,
+      (item) => item._id.toString() === itemId,
     );
     if (!item) {
       return res.status(404).json({ message: "Item not found in cart" });
@@ -128,7 +146,7 @@ export const updateCartItem = async (req, res) => {
 
     const populatedCart = await Cart.findById(cart._id).populate(
       "items.product",
-      "name price image available",
+      "name price images available",
     );
 
     res.status(200).json({
@@ -143,7 +161,7 @@ export const updateCartItem = async (req, res) => {
 export const removeCartItem = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { productId } = req.params;
+    const { itemId } = req.params;
 
     const cart = await Cart.findOne({ user: userId });
     if (!cart) {
@@ -151,20 +169,20 @@ export const removeCartItem = async (req, res) => {
     }
 
     const itemExists = cart.items.some(
-      (item) => item.product.toString() === productId,
+      (item) => item._id.toString() === itemId,
     );
     if (!itemExists) {
       return res.status(404).json({ message: "Item not found in cart" });
     }
 
     cart.items = cart.items.filter(
-      (item) => item.product.toString() !== productId,
+      (item) => item._id.toString() !== itemId,
     );
     await cart.save();
 
     const populatedCart = await Cart.findById(cart._id).populate(
       "items.product",
-      "name price image available",
+      "name price images available",
     );
 
     res.status(200).json({

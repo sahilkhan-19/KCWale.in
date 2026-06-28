@@ -17,3 +17,8 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Ignore AI/IDE agent folders
+
+.agent/
+agent/

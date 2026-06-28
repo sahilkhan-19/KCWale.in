@@ -13,9 +13,9 @@ router.get("/", protect, getCart);
 
 router.post("/add", protect, addToCart);
 
-router.patch("/update/:productId", protect, updateCartItem);
+router.patch("/update-item/:itemId", protect, updateCartItem);
 
-router.delete("/remove/:productId", protect, removeCartItem);
+router.delete("/remove-item/:itemId", protect, removeCartItem);
 
 router.delete("/clear", protect, clearCart);
 

@@ -146,7 +146,7 @@ export const getAllOrders = async (req, res) => {
         )
         .populate(
           "items.product",
-          "name image"
+          "name images"
         )
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -193,7 +193,7 @@ export const getOrderById = async (req, res) => {
       )
       .populate(
         "items.product",
-        "name image price"
+        "name images price"
       );
 
     if (!order) {
@@ -324,6 +324,57 @@ export const getSingleUser = async (req, res) => {
       });
     }
 
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// ==================== UPDATE USER ROLE ====================
+export const updateUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!role || !["customer", "admin"].includes(role)) {
+      return res.status(400).json({
+        message: "Invalid role value",
+      });
+    }
+
+    // Prevent admin from demoting themselves
+    if (id === req.user.id.toString()) {
+      return res.status(400).json({
+        message: "You cannot change your own role",
+      });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.status(200).json({
+      message: `User role updated to ${role} successfully`,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      }
+    });
+  } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        message: "Invalid user ID",
+      });
+    }
     res.status(500).json({
       message: error.message,
     });

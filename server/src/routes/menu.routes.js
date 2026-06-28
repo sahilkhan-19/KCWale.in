@@ -1,11 +1,14 @@
 import express from "express";
 const router = express.Router();
 import { getAllProducts, getSingleProduct, getCategories, getFeaturedProducts, createProduct, updateProduct, deleteProduct, toggleAvailability } from "../controllers/product.controller.js";
+import { getSettings } from "../controllers/settings.controller.js";
 import { protect, isAdmin } from "../middlewares/auth.middleware.js";
 
 router.get("/", getAllProducts);
 
 router.get("/search", getAllProducts);
+
+router.get("/settings", getSettings);
 
 router.get("/categories", getCategories);
 

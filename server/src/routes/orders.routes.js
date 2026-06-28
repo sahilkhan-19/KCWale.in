@@ -4,6 +4,7 @@ import {
   getOrders,
   getSingleOrder,
   cancelOrder,
+  calculateDelivery,
 } from "../controllers/orders.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
@@ -15,6 +16,9 @@ const router = express.Router();
 | Order Management (Customer)
 |--------------------------------------------------------------------------
 */
+
+// Calculate delivery distance, duration and charge
+router.post("/calculate-delivery", protect, calculateDelivery);
 
 // Checkout and place order
 router.post("/checkout", protect, placeOrder);

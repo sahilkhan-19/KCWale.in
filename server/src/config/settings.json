@@ -1,0 +1,6 @@
+{
+  "storeOpen": true,
+  "taxRate": 5,
+  "deliveryFee": 40,
+  "freeDeliveryThreshold": 499
+}
