@@ -19,9 +19,10 @@ import {
   Check,
 } from "lucide-react"
 import { toast } from "sonner"
-import { useCurrentLocation } from "../hooks/useCurrentLocation"
 import { Button } from "../components/ui/button"
 import { orderService } from "../services/order.service"
+import { LocationPicker } from "../components/LocationPicker"
+import type { DeliveryAddress } from "../components/LocationPicker"
 
 export const Cart: React.FC = () => {
   const navigate = useNavigate()
@@ -42,9 +43,6 @@ export const Cart: React.FC = () => {
     queryFn: cartService.getCart,
   })
 
-  // Custom geolocation hook
-  const { getCurrentLocation, loading: geoLoading } = useCurrentLocation()
-
   // Captured Coordinates state stored in localStorage for persistence
   const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(() => {
     const saved = localStorage.getItem("kcwale_coords")
@@ -58,53 +56,38 @@ export const Cart: React.FC = () => {
   })
 
   // Structured delivery address fields from localStorage
-  const [address, setAddress] = useState<{
-    house: string
-    apartment: string
-    street: string
-    landmark: string
-    city: string
-    pincode: string
-  }>(() => {
+  const [address, setAddress] = useState<DeliveryAddress>(() => {
     const saved = localStorage.getItem("kcwale_address")
-    return saved
-      ? JSON.parse(saved)
-      : { house: "", apartment: "", street: "", landmark: "", city: "", pincode: "" }
+    const defaultAddress = {
+      house: "",
+      floor: "",
+      building: "",
+      street: "",
+      area: "",
+      landmark: "",
+      city: "",
+      state: "",
+      pincode: "",
+      apartment: "",
+    }
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        return { ...defaultAddress, ...parsed }
+      } catch (e) {
+        return defaultAddress
+      }
+    }
+    return defaultAddress
   })
-
-  const updateAddressField = (field: string, value: string) => {
-    const updated = { ...address, [field]: value }
-    setAddress(updated)
-    localStorage.setItem("kcwale_address", JSON.stringify(updated))
-  }
 
   const isAddressComplete =
     address.house.trim().length > 0 &&
     address.street.trim().length > 0 &&
+    address.area.trim().length > 0 &&
     address.city.trim().length > 0 &&
+    address.state.trim().length > 0 &&
     address.pincode.trim().length > 0
-
-  // Captured Location Handler
-  const handleCaptureLocation = async () => {
-    try {
-      const result = await getCurrentLocation()
-      const coords = { latitude: result.latitude, longitude: result.longitude }
-      setCoordinates(coords)
-      setGpsAccuracy(result.accuracy)
-      localStorage.setItem("kcwale_coords", JSON.stringify(coords))
-      localStorage.setItem("kcwale_gps_accuracy", String(result.accuracy))
-
-      if (result.accuracy <= 100) {
-        toast.success(`Location captured — accuracy ±${Math.round(result.accuracy)}m`)
-      } else if (result.accuracy <= 500) {
-        toast.warning(`Location captured with moderate accuracy (±${Math.round(result.accuracy)}m). Consider recapturing outdoors.`)
-      } else {
-        toast.error(`Low GPS accuracy (±${Math.round(result.accuracy)}m). Recapture outdoors for better results.`)
-      }
-    } catch (err: any) {
-      toast.error(err || "Failed to retrieve current location. Please make sure GPS is enabled.")
-    }
-  }
 
   // Delivery metrics query using captured coordinates
   const { data: deliveryMetrics, isLoading: isDeliveryLoading } = useQuery({
@@ -115,6 +98,44 @@ export const Cart: React.FC = () => {
   })
 
   const isOutsideRadius = deliveryMetrics ? !deliveryMetrics.allowed : false
+
+  const handleClearAddress = () => {
+    const hasData =
+      coordinates ||
+      address.house.trim() ||
+      address.floor.trim() ||
+      address.building.trim() ||
+      address.street.trim() ||
+      address.area.trim() ||
+      address.landmark.trim() ||
+      address.city.trim() ||
+      address.state.trim() ||
+      address.pincode.trim();
+
+    if (!hasData) return;
+
+    if (window.confirm("Are you sure you want to clear your delivery address?")) {
+      const defaultAddress = {
+        house: "",
+        floor: "",
+        building: "",
+        street: "",
+        area: "",
+        landmark: "",
+        city: "",
+        state: "",
+        pincode: "",
+        apartment: "",
+      };
+      setAddress(defaultAddress);
+      setCoordinates(null);
+      setGpsAccuracy(null);
+      localStorage.removeItem("kcwale_address");
+      localStorage.removeItem("kcwale_coords");
+      localStorage.removeItem("kcwale_gps_accuracy");
+      toast.success("📍 Delivery address cleared.");
+    }
+  };
 
   // Mutation to update cart item quantity
   const updateQuantityMutation = useMutation({
@@ -207,191 +228,35 @@ export const Cart: React.FC = () => {
         <div className="lg:col-span-8 space-y-6">
           {/* Delivery Location section */}
           <section className="border border-outline-variant/30 bg-surface-container-low p-6 rounded-2xl shadow-lg text-left">
-            <div className="flex items-center gap-2 text-on-surface font-bold mb-4">
-              <MapPin className="w-5 h-5 text-primary" />
-              <h2 className="font-headline text-lg md:text-xl">Delivery Details</h2>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 text-on-surface font-bold">
+                <MapPin className="w-5 h-5 text-primary" />
+                <h2 className="font-headline text-lg md:text-xl">Delivery Details</h2>
+              </div>
+              {(coordinates ||
+                address.house.trim() ||
+                address.street.trim() ||
+                address.area.trim()) && (
+                <button
+                  type="button"
+                  onClick={handleClearAddress}
+                  className="text-xs text-red-500 font-extrabold hover:underline"
+                >
+                  Clear Address
+                </button>
+              )}
             </div>
 
-            <div className="space-y-4">
-              {/* Part 1: Structured Manual Address Form */}
-              <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/20 space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-primary mb-1">
-                  1. Delivery Address *
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col">
-                    <label className="text-[10px] font-bold text-on-surface-variant mb-1 ml-1">
-                      House / Flat No. *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Flat 101, Block A"
-                      value={address.house}
-                      onChange={(e) => updateAddressField("house", e.target.value)}
-                      className="px-3 py-2.5 bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all font-medium"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-[10px] font-bold text-on-surface-variant mb-1 ml-1">
-                      Apartment / Building (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Sunshine Heights"
-                      value={address.apartment}
-                      onChange={(e) => updateAddressField("apartment", e.target.value)}
-                      className="px-3 py-2.5 bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all font-medium"
-                    />
-                  </div>
-                  <div className="flex flex-col md:col-span-2">
-                    <label className="text-[10px] font-bold text-on-surface-variant mb-1 ml-1">
-                      Street / Area *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Main Market, Sector 15"
-                      value={address.street}
-                      onChange={(e) => updateAddressField("street", e.target.value)}
-                      className="px-3 py-2.5 bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all font-medium"
-                    />
-                  </div>
-                  <div className="flex flex-col md:col-span-2">
-                    <label className="text-[10px] font-bold text-on-surface-variant mb-1 ml-1">
-                      Landmark (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Near Metro Station"
-                      value={address.landmark}
-                      onChange={(e) => updateAddressField("landmark", e.target.value)}
-                      className="px-3 py-2.5 bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all font-medium"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-[10px] font-bold text-on-surface-variant mb-1 ml-1">
-                      City *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. New Delhi"
-                      value={address.city}
-                      onChange={(e) => updateAddressField("city", e.target.value)}
-                      className="px-3 py-2.5 bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all font-medium"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-[10px] font-bold text-on-surface-variant mb-1 ml-1">
-                      Pincode *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 110001"
-                      value={address.pincode}
-                      onChange={(e) => updateAddressField("pincode", e.target.value)}
-                      className="px-3 py-2.5 bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all font-medium"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Part 2: Current GPS Location Section */}
-              <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/20 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-primary">
-                    2. Current GPS Location *
-                  </h3>
-                  {coordinates && (
-                    <span className="text-[10px] font-bold text-emerald-500 flex items-center gap-1">
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      Captured
-                    </span>
-                  )}
-                </div>
-                
-                <p className="text-[10px] text-on-surface-variant/70 leading-relaxed font-medium">
-                  Precise GPS coordinates are required to confirm you are within our 10 km kitchen delivery zone and calculate the delivery fee.
-                </p>
-
-                {coordinates ? (
-                  <div className={`${gpsAccuracy && gpsAccuracy > 500 ? 'bg-red-500/10 border-red-500/20' : gpsAccuracy && gpsAccuracy > 100 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-emerald-500/10 border-emerald-500/20'} border p-3.5 rounded-xl flex flex-col gap-1.5 animate-in fade-in duration-200`}>
-                    <div className="flex items-center justify-between">
-                      <span className={`${gpsAccuracy && gpsAccuracy > 500 ? 'text-red-600' : gpsAccuracy && gpsAccuracy > 100 ? 'text-amber-600' : 'text-emerald-600'} font-extrabold text-xs flex items-center gap-1.5`}>
-                        <Check className={`h-3.5 w-3.5 ${gpsAccuracy && gpsAccuracy > 500 ? 'text-red-500' : gpsAccuracy && gpsAccuracy > 100 ? 'text-amber-500' : 'text-emerald-500'}`} />
-                        ✔ Location captured
-                        {gpsAccuracy !== null && (
-                          <span className="font-bold text-[10px] opacity-80">
-                            (±{Math.round(gpsAccuracy)}m)
-                          </span>
-                        )}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleCaptureLocation}
-                        disabled={geoLoading}
-                        className="text-xs text-primary font-bold hover:underline"
-                      >
-                        Recapture
-                      </button>
-                    </div>
-                    {gpsAccuracy && gpsAccuracy > 500 && (
-                      <p className="text-red-500 font-bold text-[10px] flex items-center gap-1 mt-0.5">
-                        <AlertTriangle className="w-3 h-3" />
-                        Low accuracy — recapture outdoors for a better GPS fix
-                      </p>
-                    )}
-                    {gpsAccuracy && gpsAccuracy > 100 && gpsAccuracy <= 500 && (
-                      <p className="text-amber-600 font-bold text-[10px] flex items-center gap-1 mt-0.5">
-                        <AlertTriangle className="w-3 h-3" />
-                        Moderate accuracy — try recapturing outdoors for better precision
-                      </p>
-                    )}
-                    {isOutsideRadius ? (
-                      <p className="text-red-500 font-bold text-[11px] flex items-center gap-1 mt-1">
-                        <AlertTriangle className="w-3.5 h-3.5" />
-                        Outside delivery range (10 km service limit)
-                      </p>
-                    ) : (
-                      deliveryMetrics && (
-                        <div className="flex gap-3 text-[11px] font-bold text-primary mt-1">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5 animate-pulse" />
-                            {deliveryMetrics.estimatedDuration} - {deliveryMetrics.estimatedDuration + 7} mins
-                          </span>
-                          <span>•</span>
-                          <span>Distance: {deliveryMetrics.distanceInKm.toFixed(1)} km</span>
-                        </div>
-                      )
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCaptureLocation}
-                      disabled={geoLoading}
-                      className="w-full py-4 border-dashed border-primary/40 text-primary hover:bg-primary/5 flex items-center justify-center gap-2 font-bold text-xs"
-                    >
-                      {geoLoading ? (
-                        <>
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          Waiting for GPS fix...
-                        </>
-                      ) : (
-                        <>
-                          <MapPin className="h-3.5 w-3.5" />
-                          📍 Use My Current Location
-                        </>
-                      )}
-                    </Button>
-                    <p className="text-[10px] text-red-500 font-bold text-center flex items-center justify-center gap-1">
-                      <AlertTriangle className="w-3 h-3" />
-                      ❌ Location not captured
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <LocationPicker
+              address={address}
+              setAddress={setAddress}
+              coordinates={coordinates}
+              setCoordinates={setCoordinates}
+              gpsAccuracy={gpsAccuracy}
+              setGpsAccuracy={setGpsAccuracy}
+              isOutsideRadius={isOutsideRadius}
+              deliveryMetrics={deliveryMetrics}
+            />
           </section>
 
           {/* List of Items */}
@@ -510,8 +375,6 @@ export const Cart: React.FC = () => {
                 <span>Delivery Fee</span>
                 {isDeliveryLoading ? (
                   <span className="text-xs text-muted-foreground animate-pulse">Calculating...</span>
-                ) : deliveryFee === 0 ? (
-                  <span className="text-tertiary font-bold">FREE</span>
                 ) : (
                   <span>₹{deliveryFee}</span>
                 )}

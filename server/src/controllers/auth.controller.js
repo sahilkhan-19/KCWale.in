@@ -3,23 +3,13 @@ import Otp from "../models/Otp.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import generateToken from "../utils/generateToken.js";
-import nodemailer from "nodemailer";
+import { getTransporter } from "../utils/email.js";
 import { OAuth2Client } from "google-auth-library";
 import crypto from "crypto";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || "PLACEHOLDER_FOR_DEV");
 
-const getTransporter = () => {
-  if (!process.env.SMTP_USER) return null;
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-};
+
 
 export const sendOtp = async (req, res) => {
   try {

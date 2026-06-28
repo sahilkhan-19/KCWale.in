@@ -1,9 +1,9 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-// Kitchen location: default is Sector 62, Noida
-const KITCHEN_LAT = parseFloat(process.env.KITCHEN_LAT) || 28.6273;
-const KITCHEN_LNG = parseFloat(process.env.KITCHEN_LNG) || 77.3725;
+// Cafe location coordinates: default to the new coordinates
+const KITCHEN_LAT = parseFloat(process.env.CAFE_LATITUDE) || 27.90256;
+const KITCHEN_LNG = parseFloat(process.env.CAFE_LONGITUDE) || 78.08232;
 const SERVICE_RADIUS_LIMIT = 10.0; // km
 
 const DELIVERY_SLABS = [
@@ -31,11 +31,57 @@ export function getHaversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 /**
- * Calculates road distance using Google Distance Matrix API
- * Falls back to Haversine * 1.25 winding factor if API is unavailable
+ * Calculates road distance using Ola Maps Distance Matrix API
+ * Falls back to Haversine * 1.25 winding factor if API is unavailable or fails
  */
 export async function calculateRoadDistance(destLat, destLng) {
-  return calculateHaversineFallback(destLat, destLng);
+  const apiKey = process.env.OLA_MAPS_API_KEY;
+  if (!apiKey) {
+    console.warn("[location.js] OLA_MAPS_API_KEY not set. Using Haversine fallback.");
+    return calculateHaversineFallback(destLat, destLng);
+  }
+
+  try {
+    const url = `https://api.olamaps.io/routing/v1/distanceMatrix?origins=${KITCHEN_LAT},${KITCHEN_LNG}&destinations=${destLat},${destLng}&api_key=${apiKey}`;
+    const response = await fetch(url, {
+      headers: {
+        "X-Request-Id": `req_dist_${Date.now()}`
+      }
+    });
+
+    if (!response.ok) {
+      console.warn(`[location.js] Ola Maps Distance Matrix API error: Status ${response.status}. Using fallback.`);
+      return calculateHaversineFallback(destLat, destLng);
+    }
+
+    const data = await response.json();
+    if (
+      data.rows &&
+      data.rows[0] &&
+      data.rows[0].elements &&
+      data.rows[0].elements[0] &&
+      (data.rows[0].elements[0].status === "OK" || data.rows[0].elements[0].status === "ok")
+    ) {
+      const element = data.rows[0].elements[0];
+      const distanceInMeters = element.distance?.value || 0;
+      const durationInSeconds = element.duration?.value || 0;
+
+      const distanceInKm = parseFloat((distanceInMeters / 1000).toFixed(2));
+      const estimatedDuration = Math.round(durationInSeconds / 60);
+
+      return {
+        distanceInKm,
+        estimatedDuration,
+        isFallback: false
+      };
+    } else {
+      console.warn("[location.js] Ola Maps Distance Matrix element status not OK. Using fallback.");
+      return calculateHaversineFallback(destLat, destLng);
+    }
+  } catch (error) {
+    console.error("[location.js] Error calling Ola Maps Distance Matrix API:", error);
+    return calculateHaversineFallback(destLat, destLng);
+  }
 }
 
 /**

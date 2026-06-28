@@ -1,4 +1,5 @@
 import React, { useState } from "react"
+import { Check } from "lucide-react"
 
 export const GetInTouch: React.FC = () => {
   const [firstName, setFirstName] = useState("")
@@ -18,6 +19,7 @@ export const GetInTouch: React.FC = () => {
     
     // Construct Form Data
     const formData = new FormData()
+    formData.append("emailAddress", email)
     formData.append("entry.471414997", `${firstName} ${lastName}`.trim())
     formData.append("entry.1948342791", email)
     formData.append("entry.913847746", message)
@@ -78,9 +80,6 @@ export const GetInTouch: React.FC = () => {
               >
                 +91 98765 43210
               </a>
-              <span className="text-xs text-neutral-500 block mt-1">
-                Available Monday to Friday, 9 AM - 6 PM GMT
-              </span>
             </div>
           </div>
         </div>
@@ -90,8 +89,8 @@ export const GetInTouch: React.FC = () => {
           <div className="bg-white p-8 md:p-10 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-neutral-100">
             {isSubmitted ? (
               <div className="py-12 text-center flex flex-col items-center justify-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary text-3xl mb-6 animate-bounce">
-                  &check;
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6 animate-bounce">
+                  <Check className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="text-2xl font-bold text-neutral-950 mb-2">Message Sent!</h3>
                 <p className="text-neutral-600 max-w-sm">

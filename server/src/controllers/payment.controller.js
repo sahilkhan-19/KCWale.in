@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { calculateRoadDistance, calculateDeliveryCharge } from "../utils/location.js";
+import { sendAdminOrderNotification } from "../utils/email.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -71,9 +72,9 @@ export const createRazorpayOrder = async (req, res) => {
     if (!deliveryAddress) {
       return res.status(400).json({ message: "Delivery address is required." });
     }
-    const { house, street, city, pincode } = deliveryAddress;
-    if (!house || !street || !city || !pincode) {
-      return res.status(400).json({ message: "House No, Street, City, and Pincode are required in delivery address." });
+    const { house, floor, building, street, area, landmark, city, state, pincode, apartment } = deliveryAddress;
+    if (!house || !street || !area || !city || !state || !pincode) {
+      return res.status(400).json({ message: "House No, Street, Area, City, State, and PIN Code are required in delivery address." });
     }
 
     if (!deliveryLocation) {
@@ -173,9 +174,9 @@ export const verifyPayment = async (req, res) => {
     if (!deliveryAddress) {
       return res.status(400).json({ message: "Delivery address is required." });
     }
-    const { house, apartment, street, landmark, city, pincode } = deliveryAddress;
-    if (!house || !street || !city || !pincode) {
-      return res.status(400).json({ message: "House No, Street, City, and Pincode are required in delivery address." });
+    const { house, floor, building, street, area, landmark, city, state, pincode, apartment } = deliveryAddress;
+    if (!house || !street || !area || !city || !state || !pincode) {
+      return res.status(400).json({ message: "House No, Street, Area, City, State, and PIN Code are required in delivery address." });
     }
 
     if (!deliveryLocation) {
@@ -340,11 +341,15 @@ export const verifyPayment = async (req, res) => {
       totalAmount: grandTotal,
       deliveryAddress: {
         house,
-        apartment,
+        floor,
+        building,
         street,
+        area,
         landmark,
         city,
+        state,
         pincode,
+        apartment,
       },
       deliveryLocation: {
         latitude: lat,
@@ -367,6 +372,9 @@ export const verifyPayment = async (req, res) => {
 
     cart.items = [];
     await cart.save();
+
+    // Trigger Admin Notification Email asynchronously
+    sendAdminOrderNotification(order);
 
     res.status(201).json({
       message: "Payment verified successfully",

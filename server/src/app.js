@@ -7,6 +7,7 @@ import ordersRoutes from "./routes/orders.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import addressRoutes from "./routes/address.routes.js";
+import mapsRoutes from "./routes/maps.routes.js";
 
 const app = express();
 app.use(cors());
@@ -19,5 +20,6 @@ app.use("/api/orders", ordersRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/addresses", addressRoutes);
+app.use("/api/maps", mapsRoutes);
 
 export default app;

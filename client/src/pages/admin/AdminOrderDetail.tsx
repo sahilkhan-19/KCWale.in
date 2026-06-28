@@ -46,7 +46,7 @@ export const AdminOrderDetail: React.FC = () => {
   })
 
   const updatePaymentStatusMutation = useMutation({
-    mutationFn: (paymentStatus: "pending" | "paid" | "failed") =>
+    mutationFn: (paymentStatus: "pending" | "confirmed" | "failed" | "paid") =>
       adminService.updateOrderPaymentStatus(id!, paymentStatus),
     onSuccess: (updatedOrder) => {
       toast.success(`Payment status updated to ${updatedOrder.paymentStatus}`)
@@ -89,7 +89,7 @@ export const AdminOrderDetail: React.FC = () => {
     updateStatusMutation.mutate(status)
   }
 
-  const handlePaymentStatusChange = (paymentStatus: "pending" | "paid" | "failed") => {
+  const handlePaymentStatusChange = (paymentStatus: "pending" | "confirmed" | "failed" | "paid") => {
     updatePaymentStatusMutation.mutate(paymentStatus)
   }
 
@@ -197,13 +197,9 @@ export const AdminOrderDetail: React.FC = () => {
                   </div>
                   <div className="flex justify-between text-xs text-on-surface-variant font-medium">
                     <span>Delivery Charge</span>
-                    {order.deliveryCharge !== undefined ? (
-                      <span className={order.deliveryCharge === 0 ? "text-emerald-400 font-bold" : "text-on-surface"}>
-                        {order.deliveryCharge === 0 ? "FREE" : `₹${order.deliveryCharge}`}
-                      </span>
-                    ) : (
-                      <span className="text-emerald-400 font-bold">FREE</span>
-                    )}
+                    <span className="text-on-surface">
+                      ₹{order.deliveryCharge ?? 40}
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs text-on-surface-variant font-medium">
                     <span>Taxes & Charges (5% GST)</span>
@@ -457,15 +453,35 @@ export const AdminOrderDetail: React.FC = () => {
                   Update Payment Status
                 </label>
                 <select
-                  value={order.paymentStatus}
+                  value={order.paymentStatus === "paid" ? "confirmed" : order.paymentStatus}
                   disabled={updatePaymentStatusMutation.isPending}
-                  onChange={(e) => handlePaymentStatusChange(e.target.value as "pending" | "paid" | "failed")}
+                  onChange={(e) => handlePaymentStatusChange(e.target.value as "pending" | "confirmed" | "failed")}
                   className="w-full text-xs font-bold border border-outline-variant/30 bg-surface-container rounded-xl p-2.5 focus:outline-none focus:border-primary text-on-surface"
                 >
                   <option value="pending">Pending</option>
-                  <option value="paid">Paid</option>
+                  <option value="confirmed">Confirmed</option>
                   <option value="failed">Failed</option>
                 </select>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={order.paymentStatus === "confirmed" || order.paymentStatus === "paid" || updatePaymentStatusMutation.isPending}
+                    onClick={() => handlePaymentStatusChange("confirmed")}
+                    className="h-9 border-outline-variant/40 hover:bg-emerald-500/10 hover:text-emerald-500 hover:border-emerald-500/30 text-[11px] font-extrabold flex items-center justify-center gap-1 transition-all disabled:opacity-50"
+                  >
+                    <span>✅ Mark as Confirmed</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={order.paymentStatus === "failed" || updatePaymentStatusMutation.isPending}
+                    onClick={() => handlePaymentStatusChange("failed")}
+                    className="h-9 border-outline-variant/40 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 text-[11px] font-extrabold flex items-center justify-center gap-1 transition-all disabled:opacity-50"
+                  >
+                    <span>❌ Mark as Failed</span>
+                  </Button>
+                </div>
               </div>
               {order.razorpayOrderId && (
                 <div className="pt-2 border-t border-outline-variant/10 space-y-1.5 font-mono text-[10px]">

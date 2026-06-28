@@ -64,15 +64,6 @@ export const Header: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-low text-body-sm border border-outline-variant/20">
-            <MapPin className="text-primary w-4 h-4" />
-            <span className="text-xs text-on-surface-variant">
-              Deliver to <span className="font-bold text-on-surface">Home</span>
-            </span>
-          </div>
-
-          <div className="w-[1px] h-6 bg-outline-variant/30 hidden sm:block"></div>
-
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -83,6 +74,9 @@ export const Header: React.FC = () => {
               <DropdownMenuContent align="end" className="bg-surface-container border-outline-variant/30 text-on-surface">
                 <DropdownMenuItem className="font-bold border-b border-outline-variant/20 py-2">
                   Hi, {user?.name}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer py-2 font-semibold">
+                  My Profile
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/orders")} className="cursor-pointer py-2">
                   My Orders

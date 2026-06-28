@@ -33,7 +33,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = "sm" })
 // Payment status badge
 const paymentConfig: Record<string, { label: string; bg: string; text: string }> = {
   pending: { label: "Pending", bg: "bg-yellow-500/15", text: "text-yellow-400" },
-  paid: { label: "Paid", bg: "bg-emerald-500/15", text: "text-emerald-400" },
+  confirmed: { label: "Confirmed", bg: "bg-emerald-500/15", text: "text-emerald-400" },
+  paid: { label: "Confirmed", bg: "bg-emerald-500/15", text: "text-emerald-400" },
   failed: { label: "Failed", bg: "bg-red-500/15", text: "text-red-400" },
 }
 

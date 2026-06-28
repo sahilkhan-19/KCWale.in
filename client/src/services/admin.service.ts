@@ -56,7 +56,7 @@ export interface AdminOrder {
   status: OrderStatus
   deliveryAddress: DeliveryAddress
   paymentMethod: "COD" | "ONLINE"
-  paymentStatus: "pending" | "paid" | "failed"
+  paymentStatus: "pending" | "confirmed" | "failed" | "paid"
   razorpayOrderId?: string
   razorpayPaymentId?: string
   deliveryLocation?: DeliveryLocation
@@ -158,7 +158,7 @@ export const adminService = {
     return response.data.order
   },
 
-  updateOrderPaymentStatus: async (id: string, paymentStatus: "pending" | "paid" | "failed") => {
+  updateOrderPaymentStatus: async (id: string, paymentStatus: "pending" | "confirmed" | "failed" | "paid") => {
     const response = await apiClient.patch<{ message: string; order: AdminOrder }>(
       `/admin/orders/${id}/payment-status`,
       { paymentStatus }

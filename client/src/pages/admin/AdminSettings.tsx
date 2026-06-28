@@ -286,21 +286,7 @@ export const AdminSettings: React.FC = () => {
                           className="bg-surface-container border-outline-variant/30 text-on-surface focus-visible:ring-1 focus-visible:ring-primary rounded-xl"
                         />
                       </div>
-
-                      {/* Free Delivery Threshold */}
-                      <div className="space-y-1.5 sm:col-span-2">
-                        <label className="text-xs font-bold text-on-surface-variant flex items-center gap-1">
-                          <Truck className="w-3.5 h-3.5" /> Free Delivery Threshold (₹)
-                        </label>
-                        <Input
-                          type="number"
-                          value={freeDeliveryThreshold}
-                          onChange={(e) => setFreeDeliveryThreshold(e.target.value)}
-                          disabled={saveMutation.isPending}
-                          className="bg-surface-container border-outline-variant/30 text-on-surface focus-visible:ring-1 focus-visible:ring-primary rounded-xl"
-                        />
-                      </div>
-                    </div>
+                     </div>
                   </div>
 
                   <div className="flex justify-end pt-2">

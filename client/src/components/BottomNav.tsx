@@ -1,9 +1,11 @@
 import React from "react"
 import { Link, useLocation } from "react-router-dom"
 import { Home, Search, ReceiptText, User } from "lucide-react"
+import { useAuth } from "../contexts/AuthContext"
 
 export const BottomNav: React.FC = () => {
   const location = useLocation()
+  const { isAuthenticated } = useAuth()
 
   const activeColor = "text-primary font-bold"
   const inactiveColor = "text-on-surface-variant hover:text-on-surface"
@@ -45,7 +47,7 @@ export const BottomNav: React.FC = () => {
       </Link>
 
       <Link
-        to="/login"
+        to={isAuthenticated ? "/profile" : "/login"}
         className={`flex flex-col items-center justify-center flex-1 py-2 transition-transform active:scale-95 ${
           isLinkActive("/login") || isLinkActive("/profile") ? activeColor : inactiveColor
         }`}

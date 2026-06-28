@@ -137,7 +137,9 @@ export const OrderTracking: React.FC = () => {
           </div>
           <div className="text-xs text-left">
             <p className="text-on-surface-variant font-bold uppercase tracking-wider">Payment Status</p>
-            <p className="text-sm font-extrabold text-on-surface mt-0.5 capitalize">{order.paymentStatus}</p>
+            <p className="text-sm font-extrabold text-on-surface mt-0.5 capitalize">
+              {order.paymentStatus === "paid" || order.paymentStatus === "confirmed" ? "Confirmed" : order.paymentStatus}
+            </p>
           </div>
         </div>
       </div>

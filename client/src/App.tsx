@@ -22,6 +22,7 @@ import { Login } from "./pages/Login"
 import { Signup } from "./pages/Signup"
 import { Unauthorized } from "./pages/Unauthorized"
 import { NotFound } from "./pages/NotFound"
+import { Profile } from "./pages/Profile"
 
 // Admin Pages
 import { AdminDashboard } from "./pages/admin/AdminDashboard"
@@ -58,8 +59,12 @@ function AppContent() {
     "/orders",
     "/checkout",
     "/order-success",
-    "/unauthorized"
-  ].includes(location.pathname) || location.pathname.startsWith("/order-tracking/") || isAdminPage
+    "/unauthorized",
+    "/profile"
+  ].includes(location.pathname) || 
+  location.pathname.startsWith("/order-tracking/") || 
+  location.pathname.startsWith("/product/") || 
+  isAdminPage
 
   // Isolated layout shell for Admin console
   if (isAdminPage) {
@@ -147,6 +152,15 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <OrderTracking />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />

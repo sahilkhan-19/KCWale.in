@@ -148,10 +148,6 @@ export const Home: React.FC = () => {
                 <Star className="w-4 h-4 fill-current text-amber-400" />
                 <span>4.7 Rating</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
-                <Bike className="w-4 h-4 text-primary" />
-                <span>Free delivery over ₹499</span>
-              </div>
             </div>
           </motion.div>
         </div>

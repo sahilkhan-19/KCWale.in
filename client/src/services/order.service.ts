@@ -43,7 +43,7 @@ export interface Order {
   status: OrderStatus
   deliveryAddress: DeliveryAddress
   paymentMethod: "COD" | "ONLINE"
-  paymentStatus: "pending" | "paid" | "failed"
+  paymentStatus: "pending" | "confirmed" | "failed" | "paid"
   razorpayOrderId?: string
   razorpayPaymentId?: string
   deliveryLocation?: DeliveryLocation

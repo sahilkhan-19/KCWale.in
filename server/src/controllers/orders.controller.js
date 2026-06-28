@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { calculateRoadDistance, calculateDeliveryCharge } from "../utils/location.js";
+import { sendAdminOrderNotification } from "../utils/email.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -105,9 +106,9 @@ export const placeOrder = async (req, res) => {
     if (!deliveryAddress) {
       return res.status(400).json({ message: "Delivery address is required." });
     }
-    const { house, apartment, street, landmark, city, pincode } = deliveryAddress;
-    if (!house || !street || !city || !pincode) {
-      return res.status(400).json({ message: "House No, Street, City, and Pincode are required in delivery address." });
+    const { house, floor, building, street, area, landmark, city, state, pincode, apartment } = deliveryAddress;
+    if (!house || !street || !area || !city || !state || !pincode) {
+      return res.status(400).json({ message: "House No, Street, Area, City, State, and PIN Code are required in delivery address." });
     }
 
     if (!deliveryLocation) {
@@ -209,11 +210,15 @@ export const placeOrder = async (req, res) => {
       totalAmount: grandTotal,
       deliveryAddress: {
         house,
-        apartment,
+        floor,
+        building,
         street,
+        area,
         landmark,
         city,
+        state,
         pincode,
+        apartment,
       },
       deliveryLocation: {
         latitude: lat,
@@ -229,6 +234,9 @@ export const placeOrder = async (req, res) => {
     // Clear cart after successful order
     cart.items = [];
     await cart.save();
+
+    // Trigger Admin Notification Email asynchronously (does not block order response)
+    sendAdminOrderNotification(order);
 
     // DEVELOPMENT ONLY — Log coordinates stored in DB
     console.log(`[Backend - placeOrder] Order created in MongoDB with ID ${order._id}. Location stored: lat=${order.deliveryLocation.latitude}, lng=${order.deliveryLocation.longitude}`);
@@ -480,7 +488,7 @@ export const updateOrderPaymentStatus = async (req, res) => {
     const { id } = req.params;
     const { paymentStatus } = req.body;
 
-    const validPaymentStatuses = ["pending", "paid", "failed"];
+    const validPaymentStatuses = ["pending", "confirmed", "failed", "paid"];
     if (!paymentStatus || !validPaymentStatuses.includes(paymentStatus)) {
       return res.status(400).json({
         message: "Invalid payment status",

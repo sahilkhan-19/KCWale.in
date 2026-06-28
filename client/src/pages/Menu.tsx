@@ -6,7 +6,7 @@ import { Search, Star, Clock, Check, Loader2 } from "lucide-react"
 
 export const Menu: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>("Hot Selling")
   const [vegFilter, setVegFilter] = useState<boolean | null>(null) // null = all, true = veg, false = non-veg
 
   // Query categories
@@ -15,7 +15,7 @@ export const Menu: React.FC = () => {
     queryFn: menuService.getCategories,
   })
 
-  // Query all products with filters
+  // Query all products with filters (disabled when on Hot Selling to avoid unnecessary fetch)
   const { data: productsData, isLoading } = useQuery({
     queryKey: ["products", searchTerm, selectedCategory],
     queryFn: () =>
@@ -24,34 +24,14 @@ export const Menu: React.FC = () => {
         category: selectedCategory || undefined,
         limit: 50,
       }),
+    enabled: selectedCategory !== "Hot Selling",
   })
 
-  // Query featured products to get categories
-  const { data: featuredProducts } = useQuery({
+  // Query featured products (Hot Selling)
+  const { data: featuredProducts, isLoading: isFeaturedLoading } = useQuery({
     queryKey: ["featuredProducts"],
     queryFn: menuService.getFeaturedProducts,
   })
-
-  const popularTags = React.useMemo(() => {
-    if (!featuredProducts || featuredProducts.length === 0) {
-      return ["Pizza", "Burger", "Rolls", "Drinks"]
-    }
-    const uniqueCategories = Array.from(new Set(featuredProducts.map((p) => p.category)))
-    const shuffled = [...uniqueCategories].sort(() => 0.5 - Math.random())
-    const selected = shuffled.slice(0, 4)
-
-    // Pad with fallback tags if we have fewer than 4 categories
-    if (selected.length < 4) {
-      const fallbacks = ["Pizza", "Burger", "Rolls", "Drinks"]
-      for (const fb of fallbacks) {
-        if (selected.length >= 4) break
-        if (!selected.includes(fb)) {
-          selected.push(fb)
-        }
-      }
-    }
-    return selected
-  }, [featuredProducts])
 
   // Client-side Veg/Non-Veg filter since it's determined based on naming (from backend schema)
   const isVegProduct = (name: string, category: string) => {
@@ -73,9 +53,30 @@ export const Menu: React.FC = () => {
     return vegFilter ? isVeg : !isVeg
   })
 
-  const handlePopularTagClick = (tag: string) => {
-    setSearchTerm(tag)
-  }
+  const displayedProducts = React.useMemo(() => {
+    if (selectedCategory === "Hot Selling") {
+      let list = featuredProducts || []
+      if (searchTerm) {
+        const lowerSearch = searchTerm.toLowerCase()
+        list = list.filter(
+          (p) =>
+            p.name.toLowerCase().includes(lowerSearch) ||
+            (p.description && p.description.toLowerCase().includes(lowerSearch))
+        )
+      }
+      if (vegFilter !== null) {
+        list = list.filter((p) => {
+          const isVeg = isVegProduct(p.name, p.category)
+          return vegFilter ? isVeg : !isVeg
+        })
+      }
+      return list
+    } else {
+      return filteredProducts || []
+    }
+  }, [selectedCategory, featuredProducts, filteredProducts, searchTerm, vegFilter])
+
+  const isMenuLoading = selectedCategory === "Hot Selling" ? isFeaturedLoading : isLoading;
 
   return (
     <div className="space-y-8 pb-16">
@@ -101,24 +102,54 @@ export const Menu: React.FC = () => {
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="font-bold text-on-surface-variant uppercase tracking-wider">Popular:</span>
-          {popularTags.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => handlePopularTagClick(tag)}
-              className="px-4 py-1.5 rounded-full text-label-md bg-surface-container border border-outline-variant/60 text-on-surface hover:bg-surface-container-high transition-colors font-semibold"
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
+
       </section>
 
       {/* Filters Section */}
-      <section className="overflow-x-auto hide-scrollbar -mx-6 px-6">
-        <div className="flex items-center gap-3 min-w-max pb-2">
-          {/* Veg Toggle */}
+      <section className="space-y-4">
+        {/* Row 1: Category Chips */}
+        <div className="overflow-x-auto hide-scrollbar -mx-6 px-6">
+          <div className="flex items-center gap-3 min-w-max pb-1">
+            <button
+              onClick={() => setSelectedCategory("Hot Selling")}
+              className={`px-4 py-2 rounded-full border font-bold text-xs transition-colors ${
+                selectedCategory === "Hot Selling"
+                  ? "border-primary bg-primary text-white"
+                  : "border-outline-variant bg-surface-container text-on-surface hover:bg-surface-container-high"
+              }`}
+            >
+              Hot Selling
+            </button>
+
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`px-4 py-2 rounded-full border font-bold text-xs transition-colors ${
+                selectedCategory === null
+                  ? "border-primary bg-primary text-white"
+                  : "border-outline-variant bg-surface-container text-on-surface hover:bg-surface-container-high"
+              }`}
+            >
+              All Items
+            </button>
+
+            {categories?.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-4 py-2 rounded-full border font-bold text-xs transition-colors capitalize ${
+                  selectedCategory === cat
+                    ? "border-primary bg-primary text-white"
+                    : "border-outline-variant bg-surface-container text-on-surface hover:bg-surface-container-high"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Row 2: Veg/Non-Veg Toggles */}
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setVegFilter(vegFilter === true ? null : true)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full border font-bold text-xs transition-colors ${
@@ -131,7 +162,6 @@ export const Menu: React.FC = () => {
             Veg
           </button>
 
-          {/* Non-Veg Toggle */}
           <button
             onClick={() => setVegFilter(vegFilter === false ? null : false)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full border font-bold text-xs transition-colors ${
@@ -143,45 +173,17 @@ export const Menu: React.FC = () => {
             {vegFilter === false && <Check className="w-3.5 h-3.5" />}
             Non-Veg
           </button>
-
-          <div className="h-6 w-[1px] bg-outline-variant/40"></div>
-
-          {/* Category Chips */}
-          <button
-            onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-full border font-bold text-xs transition-colors ${
-              selectedCategory === null
-                ? "border-primary bg-primary text-white"
-                : "border-outline-variant bg-surface-container text-on-surface hover:bg-surface-container-high"
-            }`}
-          >
-            All Items
-          </button>
-
-          {categories?.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-full border font-bold text-xs transition-colors capitalize ${
-                selectedCategory === cat
-                  ? "border-primary bg-primary text-white"
-                  : "border-outline-variant bg-surface-container text-on-surface hover:bg-surface-container-high"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
         </div>
       </section>
 
       {/* Grid Section */}
-      {isLoading ? (
+      {isMenuLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
-      ) : filteredProducts && filteredProducts.length > 0 ? (
+      ) : displayedProducts && displayedProducts.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
+          {displayedProducts.map((product) => (
             <FoodCard key={product._id} product={product} />
           ))}
         </div>
@@ -191,7 +193,7 @@ export const Menu: React.FC = () => {
           <button
             onClick={() => {
               setSearchTerm("")
-              setSelectedCategory(null)
+              setSelectedCategory("Hot Selling")
               setVegFilter(null)
             }}
             className="text-primary font-bold hover:underline text-xs mt-2"

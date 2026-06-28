@@ -63,11 +63,15 @@ const orderSchema = new mongoose.Schema(
 
     deliveryAddress: {
       house: { type: String, required: true, trim: true },
-      apartment: { type: String, trim: true },
+      floor: { type: String, trim: true },
+      building: { type: String, trim: true },
       street: { type: String, required: true, trim: true },
+      area: { type: String, required: true, trim: true },
       landmark: { type: String, trim: true },
       city: { type: String, required: true, trim: true },
+      state: { type: String, required: true, trim: true },
       pincode: { type: String, required: true, trim: true },
+      apartment: { type: String, trim: true },
     },
 
     deliveryLocation: {
@@ -115,6 +119,8 @@ const orderSchema = new mongoose.Schema(
 
     razorpayPaymentId: {
       type: String,
+      unique: true,
+      sparse: true,
     },
   },
   {

@@ -74,7 +74,7 @@ export const getAllProducts = async (req, res) => {
     const filter = {};
 
     if (category) {
-      filter.category = category;
+      filter.category = { $regex: new RegExp(`^${category}$`, "i") };
     }
 
     if (search) {
@@ -267,31 +267,46 @@ export const deleteProduct = async (req, res) => {
 // ==================== FEATURED PRODUCTS ====================
 export const getFeaturedProducts = async (req, res) => {
   try {
-    const queryConditions = [
-      { name: { $regex: /^Special Chicken Zinger Pizza$/i } },
-      { name: { $regex: /^Peri Peri Chicken Zinger Burger$/i } },
-      { name: { $regex: /^Chicken Chizza$/i }, price: 299 },
-      { name: { $regex: /^Chicken Alfredo Pasta$/i } },
-      { name: { $regex: /^Kurkure Masala Momos$/i }, price: 119 },
-      { name: { $regex: /^Classic Margherita$/i } },
-      { name: { $regex: /^Blueberry Shake$/i } },
-      { name: { $regex: /^Blue Lagoon Mojito$/i } }
+    const targetProducts = [
+      { name: /^Peri\s*Peri\s*Chicken\s*Crusted\s*San?d?wich$/i },
+      { name: /^Peri\s*Peri\s*Chicken\s*Zinger\s*Burger$/i },
+      { name: /^Kurkure\s*Masala\s*Momos$/i, price: 119 },
+      { name: /^Peri\s*Peri\s*Chicken\s*Zinger\s*Wrap$/i },
+      { name: /^Special\s*Chicken\s*Zinger\s*Pizza$/i },
+      { name: /^Chicken\s*Cheesy\s*Fries$/i, price: 199 },
+      { name: /^Blue\s*Lagoon\s*Mojito$/i },
+      { name: /^Chicken\s*Chizza$/i, price: 119 }
     ];
+
+    const queryConditions = targetProducts.map((p) => {
+      const cond = { name: { $regex: p.name } };
+      if (p.price !== undefined) {
+        cond.price = p.price;
+      }
+      return cond;
+    });
 
     const products = await Product.find({
       available: true,
       $or: queryConditions,
     });
 
-    // Shuffle the products list randomly on each request to change their order on reload
-    for (let i = products.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [products[i], products[j]] = [products[j], products[i]];
+    // Map to the exact order of targetProducts, skipping unavailable ones
+    const orderedProducts = [];
+    for (const target of targetProducts) {
+      const match = products.find((p) => {
+        const nameMatches = target.name.test(p.name);
+        const priceMatches = target.price === undefined || p.price === target.price;
+        return nameMatches && priceMatches;
+      });
+      if (match) {
+        orderedProducts.push(match);
+      }
     }
 
     res.status(200).json({
       message: "Featured products fetched successfully",
-      products,
+      products: orderedProducts,
     });
   } catch (error) {
     res.status(500).json({
@@ -303,11 +318,18 @@ export const getFeaturedProducts = async (req, res) => {
 // ==================== PRODUCT CATEGORIES ====================
 export const getCategories = async (req, res) => {
   try {
-    const categories = await Product.distinct("category");
+    const rawCategories = await Product.distinct("category");
+    const uniqueNormalized = Array.from(
+      new Set(
+        rawCategories
+          .filter((c) => c && c.trim())
+          .map((c) => c.trim().charAt(0).toUpperCase() + c.trim().slice(1).toLowerCase())
+      )
+    );
 
     res.status(200).json({
       message: "Categories fetched successfully",
-      categories,
+      categories: uniqueNormalized,
     });
   } catch (error) {
     res.status(500).json({
