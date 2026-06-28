@@ -26,8 +26,8 @@ build/
 .idea/
 
 # AI Agent folders
-.agents/
-agent/
+.agents
+agent
 skills-lock.json
 project_context.md
 
