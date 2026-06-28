@@ -14,8 +14,25 @@ import addressRoutes from "./routes/address.routes.js";
 import mapsRoutes from "./routes/maps.routes.js";
 
 const app = express();
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://kcwale.vercel.app",
+  "https://kcwale.in"
+];
+
+if (process.env.CLIENT_URL) {
+  allowedOrigins.push(...process.env.CLIENT_URL.split(",").map(url => url.trim()));
+}
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || "https://kcwale.in",
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
+  },
   credentials: true,
 }));
 
