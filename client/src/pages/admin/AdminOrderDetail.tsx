@@ -188,7 +188,10 @@ export const AdminOrderDetail: React.FC = () => {
             {/* Invoice total */}
             {(() => {
               const subtotal = order.items.reduce((acc, it) => acc + it.price * it.quantity, 0)
-              const taxes = Number((subtotal * 0.05).toFixed(2))
+              const deliveryCharge = order.deliveryCharge ?? 0
+              const taxes = Math.max(0, Number((order.totalAmount - subtotal - deliveryCharge).toFixed(2)))
+              const calculatedTaxRate = subtotal > 0 ? Math.round((taxes / subtotal) * 100) : 0
+              const taxLabel = calculatedTaxRate > 0 ? `Taxes & Charges (${calculatedTaxRate}% GST)` : "Taxes & Charges"
               return (
                 <div className="border-t border-outline-variant/10 pt-4 space-y-2 max-w-xs ml-auto text-left">
                   <div className="flex justify-between text-xs text-on-surface-variant font-medium">
@@ -198,11 +201,11 @@ export const AdminOrderDetail: React.FC = () => {
                   <div className="flex justify-between text-xs text-on-surface-variant font-medium">
                     <span>Delivery Charge</span>
                     <span className="text-on-surface">
-                      ₹{order.deliveryCharge ?? 40}
+                      ₹{deliveryCharge}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs text-on-surface-variant font-medium">
-                    <span>Taxes & Charges (5% GST)</span>
+                    <span>{taxLabel}</span>
                     <span>₹{taxes}</span>
                   </div>
                   <div className="flex justify-between text-sm font-extrabold text-on-surface border-t border-outline-variant/10 pt-2">

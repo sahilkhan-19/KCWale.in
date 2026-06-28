@@ -21,7 +21,6 @@ export const sendOtp = async (req, res) => {
     await Otp.deleteMany({ email });
     await Otp.create({ email, otp });
     
-    console.log(`[DEV] OTP for ${email} is ${otp}`);
 
     const transporter = getTransporter();
     if (transporter) {
@@ -141,8 +140,7 @@ export const login = async (req, res) => {
       await Otp.deleteMany({ email });
       await Otp.create({ email, otp: generatedOtp });
       
-      console.log(`[DEV] Login OTP for ${email} is ${generatedOtp}`);
-      
+
       const transporter = getTransporter();
       if (transporter) {
         try {

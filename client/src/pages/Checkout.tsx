@@ -132,7 +132,8 @@ export const Checkout: React.FC = () => {
 
   const subtotal = cartData?.subtotal || 0
   const deliveryFee = deliveryMetrics ? (deliveryMetrics.deliveryCharge !== -1 ? deliveryMetrics.deliveryCharge : 0) : 40
-  const taxes = Number((subtotal * 0.05).toFixed(2))
+  const taxRatePercent = settings?.taxRate ?? 5
+  const taxes = Number((subtotal * (taxRatePercent / 100)).toFixed(2))
   const grandTotal = Number((subtotal + deliveryFee + taxes).toFixed(2))
 
   // Mutation to place COD order
@@ -348,7 +349,7 @@ export const Checkout: React.FC = () => {
             <div className="flex-grow text-xs leading-relaxed text-left">
               <p className="font-extrabold text-red-500">Sorry!</p>
               <p className="text-on-surface-variant/80 mt-0.5 font-medium">
-                KCWALE currently delivers only within 10 km of our kitchen. Please choose a different delivery location.
+                KCWALE currently delivers only within 15 km of our kitchen. Please choose a different delivery location.
               </p>
             </div>
           </div>
@@ -427,13 +428,7 @@ export const Checkout: React.FC = () => {
 
               {deliveryMetrics && (
                 <div className="flex items-center gap-3 text-on-surface-variant text-[11px] font-bold bg-primary/5 border border-primary/20 px-3.5 py-2.5 rounded-xl">
-                  <span className="bg-surface-container-highest px-2 py-0.5 rounded">
-                    🛵 {deliveryMetrics.distanceInKm.toFixed(1)} km away
-                  </span>
-                  <span className="bg-surface-container-highest px-2 py-0.5 rounded">
-                    ⏱ {deliveryMetrics.estimatedDuration} mins
-                  </span>
-                  <span className="bg-primary/10 text-primary px-2 py-0.5 rounded ml-auto">
+                  <span className="bg-primary/10 text-primary px-2 py-0.5 rounded">
                     ₹{deliveryMetrics.deliveryCharge} delivery fee
                   </span>
                 </div>
@@ -525,7 +520,7 @@ export const Checkout: React.FC = () => {
               )}
             </div>
             <div className="flex justify-between text-on-surface-variant">
-              <span>Taxes & Charges</span>
+              <span>Taxes & Charges ({taxRatePercent}% GST)</span>
               <span className="text-on-surface">₹{taxes}</span>
             </div>
           </div>

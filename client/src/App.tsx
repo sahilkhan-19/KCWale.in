@@ -197,7 +197,10 @@ function ScrollToTop() {
 }
 
 function App() {
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "1234567890-placeholder.apps.googleusercontent.com"
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  if (!googleClientId) {
+    throw new Error("VITE_GOOGLE_CLIENT_ID is not configured in the environment variables.");
+  }
   
   return (
     <GoogleOAuthProvider clientId={googleClientId}>

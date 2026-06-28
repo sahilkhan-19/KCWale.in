@@ -1,53 +1,35 @@
-import fs from "fs"
-import path from "path"
-import { fileURLToPath } from "url"
+import Setting from "../models/Setting.js";
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const settingsFilePath = path.join(__dirname, "../config/settings.json")
-
-const getDefaults = () => ({
-  storeOpen: true,
-  taxRate: 5,
-  deliveryFee: 40,
-  freeDeliveryThreshold: 499
-})
-
-export const getSettings = (req, res) => {
+export const getSettings = async (req, res) => {
   try {
-    if (!fs.existsSync(settingsFilePath)) {
-      return res.status(200).json(getDefaults())
+    let settings = await Setting.findOne();
+    if (!settings) {
+      settings = await Setting.create({});
     }
-    const data = fs.readFileSync(settingsFilePath, "utf8")
-    return res.status(200).json(JSON.parse(data))
+    return res.status(200).json(settings);
   } catch (error) {
-    return res.status(500).json({ message: error.message })
+    return res.status(500).json({ message: error.message });
   }
-}
+};
 
-export const updateSettings = (req, res) => {
+export const updateSettings = async (req, res) => {
   try {
-    const { storeOpen, taxRate, deliveryFee, freeDeliveryThreshold } = req.body
+    const { storeOpen, taxRate, deliveryFee, freeDeliveryThreshold } = req.body;
 
-    const configDir = path.dirname(settingsFilePath)
-    if (!fs.existsSync(configDir)) {
-      fs.mkdirSync(configDir, { recursive: true })
+    let settings = await Setting.findOne();
+    if (!settings) {
+      settings = new Setting({});
     }
 
-    const currentSettings = fs.existsSync(settingsFilePath)
-      ? JSON.parse(fs.readFileSync(settingsFilePath, "utf8"))
-      : getDefaults()
+    if (storeOpen !== undefined) settings.storeOpen = Boolean(storeOpen);
+    if (taxRate !== undefined) settings.taxRate = Number(taxRate);
+    if (deliveryFee !== undefined) settings.deliveryFee = Number(deliveryFee);
+    if (freeDeliveryThreshold !== undefined) settings.freeDeliveryThreshold = Number(freeDeliveryThreshold);
 
-    const newSettings = {
-      storeOpen: storeOpen !== undefined ? Boolean(storeOpen) : currentSettings.storeOpen,
-      taxRate: taxRate !== undefined ? Number(taxRate) : currentSettings.taxRate,
-      deliveryFee: deliveryFee !== undefined ? Number(deliveryFee) : currentSettings.deliveryFee,
-      freeDeliveryThreshold: freeDeliveryThreshold !== undefined ? Number(freeDeliveryThreshold) : currentSettings.freeDeliveryThreshold
-    }
-
-    fs.writeFileSync(settingsFilePath, JSON.stringify(newSettings, null, 2), "utf8")
-    return res.status(200).json({ message: "Settings updated successfully", settings: newSettings })
+    await settings.save();
+    return res.status(200).json({ message: "Settings updated successfully", settings });
   } catch (error) {
-    return res.status(500).json({ message: error.message })
+    return res.status(500).json({ message: error.message });
   }
-}
+};
+

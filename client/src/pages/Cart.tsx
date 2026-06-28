@@ -165,7 +165,8 @@ export const Cart: React.FC = () => {
   const items = cart?.items || []
   const subtotal = cartData?.subtotal || 0
   const deliveryFee = deliveryMetrics ? (deliveryMetrics.deliveryCharge !== -1 ? deliveryMetrics.deliveryCharge : 0) : 40
-  const taxes = Number((subtotal * 0.05).toFixed(2)) // 5% GST
+  const taxRatePercent = settings?.taxRate ?? 5
+  const taxes = Number((subtotal * (taxRatePercent / 100)).toFixed(2))
   const grandTotal = Number((subtotal + deliveryFee + taxes).toFixed(2))
 
   const handleQuantityChange = (productId: string, currentQty: number, change: number) => {
@@ -360,7 +361,7 @@ export const Cart: React.FC = () => {
                 <div className="flex-1 text-[11px] leading-relaxed text-left">
                   <p className="font-extrabold text-red-500">Outside Service Area</p>
                   <p className="text-on-surface-variant/80 mt-0.5">
-                    KCWALE currently delivers only within 10 km of our kitchen.
+                    KCWALE currently delivers only within 15 km of our kitchen.
                   </p>
                 </div>
               </div>
@@ -380,7 +381,7 @@ export const Cart: React.FC = () => {
                 )}
               </div>
               <div className="flex justify-between text-on-surface-variant font-medium">
-                <span>Taxes & Charges (5% GST)</span>
+                <span>Taxes & Charges ({taxRatePercent}% GST)</span>
                 <span>₹{taxes}</span>
               </div>
               <div className="border-t border-outline-variant/30 pt-3 flex justify-between text-sm">

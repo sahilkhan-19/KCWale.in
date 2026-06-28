@@ -4,13 +4,19 @@ dotenv.config();
 // Cafe location coordinates: default to the new coordinates
 const KITCHEN_LAT = parseFloat(process.env.CAFE_LATITUDE) || 27.90256;
 const KITCHEN_LNG = parseFloat(process.env.CAFE_LONGITUDE) || 78.08232;
-const SERVICE_RADIUS_LIMIT = 10.0; // km
+const SERVICE_RADIUS_LIMIT = 15.0; // km
 
+// Delivery charge slabs (upper-bound inclusive)
+// 0–2 km  → ₹20
+// 2–4 km  → ₹35
+// 4–6 km  → ₹50
+// 6–8 km  → ₹70
+// 8–15 km → ₹90 + ₹10/km (variable)
 const DELIVERY_SLABS = [
-  { maxDistance: 3, charge: 30 },
-  { maxDistance: 5, charge: 45 },
-  { maxDistance: 8, charge: 60 },
-  { maxDistance: 10, charge: 80 }
+  { maxDistance: 2, charge: 20 },
+  { maxDistance: 4, charge: 35 },
+  { maxDistance: 6, charge: 50 },
+  { maxDistance: 8, charge: 70 },
 ];
 
 /**
@@ -63,8 +69,8 @@ export async function calculateRoadDistance(destLat, destLng) {
       (data.rows[0].elements[0].status === "OK" || data.rows[0].elements[0].status === "ok")
     ) {
       const element = data.rows[0].elements[0];
-      const distanceInMeters = element.distance?.value || 0;
-      const durationInSeconds = element.duration?.value || 0;
+      const distanceInMeters = typeof element.distance === "object" ? (element.distance?.value || 0) : (element.distance || 0);
+      const durationInSeconds = typeof element.duration === "object" ? (element.duration?.value || 0) : (element.duration || 0);
 
       const distanceInKm = parseFloat((distanceInMeters / 1000).toFixed(2));
       const estimatedDuration = Math.round(durationInSeconds / 60);
@@ -102,15 +108,9 @@ function calculateHaversineFallback(destLat, destLng) {
  * Determines delivery charge based on the distance slabs
  */
 export function calculateDeliveryCharge(distance) {
-  // ============================================================
-  // DEVELOPMENT ONLY
-  // Delivery radius validation is temporarily disabled for local testing.
-  // Re-enable this block before production deployment.
-  // ============================================================
-  // ORIGINAL CODE (uncomment for production):
-  // if (distance > SERVICE_RADIUS_LIMIT) {
-  //   return -1;
-  // }
+  if (distance > SERVICE_RADIUS_LIMIT) {
+    return -1;
+  }
 
   for (const slab of DELIVERY_SLABS) {
     if (distance <= slab.maxDistance) {
@@ -118,10 +118,8 @@ export function calculateDeliveryCharge(distance) {
     }
   }
 
-  // DEVELOPMENT ONLY — return max slab charge instead of -1 for distances beyond slabs
-  // ORIGINAL CODE (uncomment for production):
-  // return -1;
-  return DELIVERY_SLABS[DELIVERY_SLABS.length - 1].charge;
+  // 8–15 km: ₹90 base + ₹10 per km beyond 8 km
+  return Math.round(90 + (distance - 8) * 10);
 }
 
 export { KITCHEN_LAT, KITCHEN_LNG, SERVICE_RADIUS_LIMIT };

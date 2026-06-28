@@ -374,18 +374,12 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             {isOutsideRadius ? (
               <p className="text-red-500 font-bold text-[11px] flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                Outside delivery range (10 km service limit)
+                Outside delivery range (15 km service limit)
               </p>
             ) : (
               deliveryMetrics && (
                 <div className="flex items-center gap-3 text-on-surface-variant text-[11px] font-bold">
-                  <span className="bg-surface-container-highest px-2 py-0.5 rounded">
-                    🛵 {deliveryMetrics.distanceInKm.toFixed(1)} km away
-                  </span>
-                  <span className="bg-surface-container-highest px-2 py-0.5 rounded">
-                    ⏱ {deliveryMetrics.estimatedDuration} mins
-                  </span>
-                  <span className="bg-primary/10 text-primary px-2 py-0.5 rounded ml-auto">
+                  <span className="bg-primary/10 text-primary px-2 py-0.5 rounded">
                     ₹{deliveryMetrics.deliveryCharge} delivery fee
                   </span>
                 </div>
@@ -410,7 +404,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             </label>
             <input
               type="text"
-              placeholder="e.g. Flat 101, Ground Floor"
+              placeholder="e.g. 12, Sir Syed Hall (North)"
               value={address.house}
               onChange={(e) => updateAddressField("house", e.target.value)}
               required
@@ -424,7 +418,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             </label>
             <input
               type="text"
-              placeholder="e.g. 1st Floor, G/F"
+              placeholder="e.g. Ground Floor"
               value={address.floor}
               onChange={(e) => updateAddressField("floor", e.target.value)}
               className="px-3 py-2.5 bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all font-medium"
@@ -437,7 +431,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             </label>
             <input
               type="text"
-              placeholder="e.g. Sunshine Apartments"
+              placeholder="e.g. Sir Syed Hall (North)"
               value={address.building}
               onChange={(e) => updateAddressField("building", e.target.value)}
               className="px-3 py-2.5 bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all font-medium"
@@ -450,7 +444,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             </label>
             <input
               type="text"
-              placeholder="e.g. Near Metro Station"
+              placeholder="e.g. Near Bab-e-Syed Gate"
               value={address.landmark}
               onChange={(e) => updateAddressField("landmark", e.target.value)}
               className="px-3 py-2.5 bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all font-medium"
@@ -463,7 +457,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             </label>
             <input
               type="text"
-              placeholder="e.g. Main Road, Street 5"
+              placeholder="e.g. Sir Syed Nagar Road"
               value={address.street}
               onChange={(e) => updateAddressField("street", e.target.value)}
               required
@@ -477,7 +471,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             </label>
             <input
               type="text"
-              placeholder="e.g. Sector 62"
+              placeholder="e.g. Aligarh Muslim University Campus"
               value={address.area}
               onChange={(e) => updateAddressField("area", e.target.value)}
               required
@@ -491,7 +485,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             </label>
             <input
               type="text"
-              placeholder="e.g. Noida"
+              placeholder="e.g. Aligarh"
               value={address.city}
               onChange={(e) => updateAddressField("city", e.target.value)}
               required
@@ -519,7 +513,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             </label>
             <input
               type="text"
-              placeholder="e.g. 201301"
+              placeholder="e.g. 202002"
               value={address.pincode}
               onChange={(e) => updateAddressField("pincode", e.target.value)}
               required

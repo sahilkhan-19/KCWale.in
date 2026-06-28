@@ -24,3 +24,13 @@ build/
 # IDE files
 .vscode/
 .idea/
+
+# AI Agent folders
+.agents/
+agent/
+skills-lock.json
+project_context.md
+
+# Build outputs
+dist/
+build/
