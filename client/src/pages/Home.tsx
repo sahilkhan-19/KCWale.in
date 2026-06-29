@@ -67,7 +67,7 @@ export const Home: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/75 to-transparent z-10"></div>
           <img
             className="w-full h-full object-cover"
-            src="https://res.cloudinary.com/dxu24wv1q/image/upload/v1782403615/kcwale_banner_az1aky.jpg"
+            src="/hero-banner.jpeg"
             alt="KC Wale Banner"
           />
         </div>
