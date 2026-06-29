@@ -3,7 +3,7 @@ import Otp from "../models/Otp.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import generateToken from "../utils/generateToken.js";
-import { getTransporter } from "../utils/email.js";
+import { getResendClient } from "../utils/email.js";
 import { OAuth2Client } from "google-auth-library";
 import crypto from "crypto";
 
@@ -22,9 +22,16 @@ export const sendOtp = async (req, res) => {
     await Otp.create({ email, otp });
     
 
-    const transporter = getTransporter();
-    if (transporter) {
+    const resend = getResendClient();
+    if (resend) {
       try {
+        const fromEmail = process.env.RESEND_FROM_EMAIL;
+        if (!fromEmail) {
+          console.error("[OTP] RESEND_FROM_EMAIL is missing from environment variables.");
+          await Otp.deleteMany({ email });
+          return res.status(500).json({ message: "Email service is not properly configured." });
+        }
+        
         const emailHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaec; border-radius: 10px;">
             <h2 style="color: #ff5722; text-align: center;">Welcome to KC Wale!</h2>
@@ -37,23 +44,30 @@ export const sendOtp = async (req, res) => {
           </div>
         `;
 
-        await transporter.sendMail({
-          from: `"KC Wale" <${process.env.SMTP_USER}>`,
+        const { data, error } = await resend.emails.send({
+          from: `"KC Wale" <${fromEmail}>`,
           to: email,
           subject: "Verify Your Email - KC Wale",
           text: `Your KC Wale verification code is ${otp}. It will expire in 5 minutes.`,
           html: emailHtml
         });
+        
+        if (error) {
+          console.error(`[OTP] Resend API Error sending to ${email}:`, error.message);
+          await Otp.deleteMany({ email });
+          return res.status(500).json({ message: "Failed to send OTP email. Please try again later." });
+        }
 
-        console.log(`[OTP] Email sent successfully to ${email}`);
+        console.log(`[OTP] Email sent successfully to ${email}, ID: ${data?.id}`);
         return res.status(200).json({ message: "OTP sent successfully" });
       } catch (err) {
-        console.error(`[OTP] SMTP Error sending to ${email}:`, err.message);
-        console.error(`[OTP] SMTP Config: host=${process.env.SMTP_HOST}, port=${process.env.SMTP_PORT}, user=${process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 5) + '***' : 'NOT SET'}`);
+        console.error(`[OTP] Unexpected error sending to ${email}:`, err.message);
+        await Otp.deleteMany({ email });
         return res.status(500).json({ message: "Failed to send OTP email. Please try again later." });
       }
     } else {
-      console.error("[OTP] SMTP not configured. SMTP_USER is missing from environment variables.");
+      console.error("[OTP] Resend not configured. RESEND_API_KEY is missing.");
+      await Otp.deleteMany({ email });
       return res.status(500).json({ message: "Email service is not configured." });
     }
   } catch (error) {
@@ -145,33 +159,50 @@ export const login = async (req, res) => {
       await Otp.create({ email, otp: generatedOtp });
       
 
-      const transporter = getTransporter();
-      if (transporter) {
+      const resend = getResendClient();
+      if (resend) {
         try {
-          const loginHtml = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaec; border-radius: 10px;">
-              <h2 style="color: #ff5722; text-align: center;">KC Wale Login Verification</h2>
-              <p style="color: #333; font-size: 16px;">Hello,</p>
-              <p style="color: #333; font-size: 16px;">A login attempt was made for your account. Please use the following code to complete your sign-in. This code is valid for <strong>5 minutes</strong>.</p>
-              <div style="background-color: #f4f4f4; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0;">
-                <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #111;">${generatedOtp}</span>
+          const fromEmail = process.env.RESEND_FROM_EMAIL;
+          if (!fromEmail) {
+            console.error("[OTP] RESEND_FROM_EMAIL is missing from environment variables.");
+            await Otp.deleteMany({ email });
+            return res.status(500).json({ message: "Email service is not properly configured." });
+          } else {
+            const loginHtml = `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaec; border-radius: 10px;">
+                <h2 style="color: #ff5722; text-align: center;">KC Wale Login Verification</h2>
+                <p style="color: #333; font-size: 16px;">Hello,</p>
+                <p style="color: #333; font-size: 16px;">A login attempt was made for your account. Please use the following code to complete your sign-in. This code is valid for <strong>5 minutes</strong>.</p>
+                <div style="background-color: #f4f4f4; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                  <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #111;">${generatedOtp}</span>
+                </div>
+                <p style="color: #777; font-size: 12px; text-align: center;">If you did not attempt to log in, please secure your account immediately.</p>
               </div>
-              <p style="color: #777; font-size: 12px; text-align: center;">If you did not attempt to log in, please secure your account immediately.</p>
-            </div>
-          `;
+            `;
 
-          await transporter.sendMail({
-            from: `"KC Wale" <${process.env.SMTP_USER}>`,
-            to: email,
-            subject: "Your Login Code - KC Wale",
-            text: `Your KC Wale login code is ${generatedOtp}. It will expire in 5 minutes.`,
-            html: loginHtml
-          });
+            const { error } = await resend.emails.send({
+              from: `"KC Wale" <${fromEmail}>`,
+              to: email,
+              subject: "Your Login Code - KC Wale",
+              text: `Your KC Wale login code is ${generatedOtp}. It will expire in 5 minutes.`,
+              html: loginHtml
+            });
+            
+            if (error) {
+              console.log("[DEV] Resend API error.", error.message);
+              await Otp.deleteMany({ email });
+              return res.status(500).json({ message: "Failed to send OTP email. Please try again later." });
+            }
+          }
         } catch (err) {
           console.log("[DEV] Failed to send email, but OTP is logged above.", err.message);
+          await Otp.deleteMany({ email });
+          return res.status(500).json({ message: "Failed to send OTP email. Please try again later." });
         }
       } else {
-        console.log("[DEV] SMTP not configured. Skipping email send.");
+        console.log("[DEV] Resend not configured. Skipping email send.");
+        await Otp.deleteMany({ email });
+        return res.status(500).json({ message: "Email service is not configured." });
       }
       
       return res.status(200).json({ message: "OTP sent to email", requiresOtp: true });

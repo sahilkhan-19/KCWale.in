@@ -571,31 +571,31 @@ export const AdminSettings: React.FC = () => {
                   </div>
                 </div>
 
-                {/* SMTP Server status */}
+                {/* Resend Server status */}
                 <div className="bg-surface-container-low border border-outline-variant/20 rounded-2xl p-5 md:p-6 space-y-4">
                   <div className="flex items-start justify-between gap-4 border-b border-outline-variant/10 pb-3">
                     <div>
                       <h2 className="text-md font-bold text-on-surface flex items-center gap-2">
                         <Mail className="w-4.5 h-4.5 text-primary" />
-                        SMTP Mail Server
+                        Resend Mail Server
                       </h2>
                       <p className="text-[10px] text-on-surface-variant mt-0.5">
-                        Notification routing server configurations.
+                        Notification routing via Resend API.
                       </p>
                     </div>
                     <span className="text-[9px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                      <CheckCircle className="w-2.5 h-2.5" /> SMTP Active
+                      <CheckCircle className="w-2.5 h-2.5" /> API Active
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-on-surface">
                     <div className="p-3 bg-surface-container rounded-xl space-y-1">
-                      <p className="font-semibold text-on-surface-variant text-[10px]">SMTP Host</p>
-                      <p className="font-bold font-mono">smtp.gmail.com</p>
+                      <p className="font-semibold text-on-surface-variant text-[10px]">Email Provider</p>
+                      <p className="font-bold font-mono">Resend</p>
                     </div>
                     <div className="p-3 bg-surface-container rounded-xl space-y-1">
-                      <p className="font-semibold text-on-surface-variant text-[10px]">SMTP Port</p>
-                      <p className="font-bold">587</p>
+                      <p className="font-semibold text-on-surface-variant text-[10px]">Integration Type</p>
+                      <p className="font-bold">REST SDK</p>
                     </div>
                   </div>
                 </div>

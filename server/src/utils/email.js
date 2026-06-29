@@ -1,24 +1,13 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import User from "../models/User.js";
 
-let transporterInstance = null;
+let resendInstance = null;
 
-export const getTransporter = () => {
-  if (transporterInstance) return transporterInstance;
-  if (!process.env.SMTP_USER) return null;
-  transporterInstance = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT) || 587,
-    secure: false, // false for port 587 (STARTTLS); true for 465
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-    connectionTimeout: 10000, // 10s to establish connection
-    greetingTimeout: 10000,   // 10s for server greeting
-    socketTimeout: 10000,     // 10s for socket inactivity
-  });
-  return transporterInstance;
+export const getResendClient = () => {
+  if (resendInstance) return resendInstance;
+  if (!process.env.RESEND_API_KEY) return null;
+  resendInstance = new Resend(process.env.RESEND_API_KEY);
+  return resendInstance;
 };
 
 export const sendAdminOrderNotification = async (order) => {
@@ -196,16 +185,28 @@ export const sendAdminOrderNotification = async (order) => {
       </html>
     `;
 
-    const transporter = getTransporter();
-    if (transporter) {
-      await transporter.sendMail({
-        from: `"KC Wale Admin" <${process.env.SMTP_USER}>`,
+    const resend = getResendClient();
+    if (resend) {
+      const fromEmail = process.env.RESEND_FROM_EMAIL;
+      if (!fromEmail) {
+        console.error("[Email Service] RESEND_FROM_EMAIL is not configured.");
+        return;
+      }
+      const { data, error } = await resend.emails.send({
+        from: `"KC Wale Admin" <${fromEmail}>`,
         to: adminEmail,
         subject: `🔔 New Order #${order._id} | ₹${order.totalAmount} | KCWALE`,
         text: `New order received! Order ID: ${order._id}. Grand Total: ₹${order.totalAmount}. Customer Name: ${customerName}.`,
         html: emailHtml,
       });
-      console.log(`[Email Service] Admin notification sent for order: ${order._id}`);
+
+      if (error) {
+        console.error(`[Email Service] Resend API Error for ${order._id}:`, error.message);
+      } else {
+        console.log(`[Email Service] Admin notification sent for order: ${order._id}, ID: ${data?.id}`);
+      }
+    } else {
+      console.error("[Email Service] Resend not configured. RESEND_API_KEY is missing.");
     }
   } catch (err) {
     console.error(`[Email Service] Failed to send admin order notification for ${order._id}:`, err.message);
