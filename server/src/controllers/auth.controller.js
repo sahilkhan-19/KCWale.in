@@ -38,7 +38,7 @@ export const sendOtp = async (req, res) => {
         `;
 
         await transporter.sendMail({
-          from: '"KC Wale" <noreply@kcwale.in>',
+          from: `"KC Wale" <${process.env.SMTP_USER}>`,
           to: email,
           subject: "Verify Your Email - KC Wale",
           text: `Your KC Wale verification code is ${otp}. It will expire in 5 minutes.`,
@@ -157,7 +157,7 @@ export const login = async (req, res) => {
           `;
 
           await transporter.sendMail({
-            from: '"KC Wale" <noreply@kcwale.in>',
+            from: `"KC Wale" <${process.env.SMTP_USER}>`,
             to: email,
             subject: "Your Login Code - KC Wale",
             text: `Your KC Wale login code is ${generatedOtp}. It will expire in 5 minutes.`,
