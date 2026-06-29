@@ -44,14 +44,18 @@ export const sendOtp = async (req, res) => {
           text: `Your KC Wale verification code is ${otp}. It will expire in 5 minutes.`,
           html: emailHtml
         });
+
+        console.log(`[OTP] Email sent successfully to ${email}`);
+        return res.status(200).json({ message: "OTP sent successfully" });
       } catch (err) {
-        console.log("[DEV] Failed to send email, but OTP is logged above.", err.message);
+        console.error(`[OTP] SMTP Error sending to ${email}:`, err.message);
+        console.error(`[OTP] SMTP Config: host=${process.env.SMTP_HOST}, port=${process.env.SMTP_PORT}, user=${process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 5) + '***' : 'NOT SET'}`);
+        return res.status(500).json({ message: "Failed to send OTP email. Please try again later." });
       }
     } else {
-      console.log("[DEV] SMTP not configured. Skipping email send.");
+      console.error("[OTP] SMTP not configured. SMTP_USER is missing from environment variables.");
+      return res.status(500).json({ message: "Email service is not configured." });
     }
-
-    res.status(200).json({ message: "OTP sent successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
