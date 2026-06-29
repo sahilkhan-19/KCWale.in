@@ -109,7 +109,7 @@ export const ProductDetails: React.FC = () => {
   const prepTime = product.name.includes("Pizza") ? "30 min" : "18 min"
 
   return (
-    <div className="pb-32 -mx-gutter max-w-none">
+    <div className="pb-44 md:pb-32 -mx-gutter max-w-none">
       {/* Hero Header Section */}
       <section className="relative w-full h-[320px] md:h-[420px] overflow-hidden">
         <div className="absolute inset-0 w-full h-full">
@@ -309,7 +309,7 @@ export const ProductDetails: React.FC = () => {
       </div>
 
       {/* Sticky Bottom CTA */}
-      <div className="fixed bottom-0 left-0 w-full z-40 bg-surface-container-lowest/90 backdrop-blur-xl border-t border-outline-variant/30 py-4 px-6 md:px-0 shadow-[0_-8px_30px_rgb(0,0,0,0.5)]">
+      <div className="fixed bottom-16 md:bottom-0 left-0 w-full z-40 bg-surface-container-lowest/90 backdrop-blur-xl border-t border-outline-variant/30 py-4 px-6 md:px-0 shadow-[0_-8px_30px_rgb(0,0,0,0.5)]">
         <div className="max-w-container-max mx-auto flex items-center justify-between gap-6">
           <div className={`flex items-center bg-surface-container-highest rounded-full p-1 border border-outline-variant/40 ${
             !product.available ? "opacity-40 cursor-not-allowed" : ""

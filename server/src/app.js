@@ -15,9 +15,7 @@ import mapsRoutes from "./routes/maps.routes.js";
 
 const app = express();
 const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "https://kcwale.vercel.app",
+  "https://www.kcwale.in",
   "https://kcwale.in"
 ];
 
