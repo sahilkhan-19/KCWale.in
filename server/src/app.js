@@ -35,6 +35,26 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+
+/* ---------- Health Check ---------- */
+
+// GET /health
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
+
+// HEAD /health
+app.head("/health", (req, res) => {
+  res.sendStatus(200);
+});
+
+/* ---------- API Routes ---------- */
+
 app.use("/api/auth", authRoutes);
 app.use("/api/menu", menuRoutes);
 app.use("/api/cart", cartRoutes);
