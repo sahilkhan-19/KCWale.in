@@ -1,6 +1,6 @@
 # 🌙 KCWale.in
 
-### **Night with KCWale — Your late-night food, just a few clicks away.**
+### **Night with KCWale - Your late night food, just a few clicks away.**
 
 **KCWale.in** is a production-ready, mobile-first food ordering platform built for a cloud kitchen in Aligarh, Uttar Pradesh.
 
